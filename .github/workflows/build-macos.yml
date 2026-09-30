@@ -24,6 +24,8 @@ jobs:
           xcrun --sdk macosx --show-sdk-version
 
       - name: Build and package
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
             export VERSION="${GITHUB_REF_NAME#v}"
@@ -33,7 +35,7 @@ jobs:
           export BUILD="$GITHUB_RUN_NUMBER"
           ./scripts/package-app.sh
           {
-            echo "### GlassVPN $VERSION ($BUILD)"
+            echo "### GlassVPN $VERSION ($BUILD) · sing-box $(plutil -extract GVPNCoreVersion raw -o - dist/GlassVPN.app/Contents/Info.plist)"
             echo '```'
             du -sh dist/GlassVPN.app
             ls -l dist/GlassVPN.app/Contents/MacOS/ dist/*.zip

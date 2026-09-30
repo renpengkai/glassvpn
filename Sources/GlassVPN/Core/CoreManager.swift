@@ -1,7 +1,8 @@
 //
 // CoreManager.swift
 // GlassVPN
-// sing-box 内核管理: 不随应用打包 (保持安装包小), 首次使用时从 GitHub Releases 下载, 也可导入本地文件。
+// sing-box 内核管理: 应用包内自带一份 (Contents/MacOS/sing-box), 启动时安装到数据目录;
+// 也可从 GitHub Releases 更新或导入本地文件。
 //
 
 import Foundation
@@ -19,7 +20,17 @@ final class CoreManager: ObservableObject {
     static let minimumVersion = [1, 12, 0]
 
     init() {
+        // 同步执行: 启动流程紧接着用 isInstalled 判断是否弹出引导窗口
+        Self.installBundledIfNeeded()
         refresh()
+    }
+
+    /// 打包脚本写入 Info.plist 的内置内核版本; BUNDLE_CORE=0 打包时为空
+    nonisolated static var bundledVersion: String? {
+        guard let v = Bundle.main.object(forInfoDictionaryKey: "GVPNCoreVersion") as? String, !v.isEmpty else {
+            return nil
+        }
+        return v
     }
 
     var isInstalled: Bool { FileManager.default.isExecutableFile(atPath: Paths.core.path) }
@@ -92,9 +103,25 @@ final class CoreManager: ObservableObject {
         return line.split(separator: " ").last.map(String.init)
     }
 
+    /// 数据目录里没有内核, 或已装版本比内置的旧时, 用内置内核覆盖。
+    /// 用户手动更新到更高版本后不会被降级回去。
+    nonisolated static func installBundledIfNeeded() {
+        guard let bundledVersion,
+              let bundled = Bundle.main.executableURL?.deletingLastPathComponent().appendingPathComponent("sing-box"),
+              FileManager.default.isExecutableFile(atPath: bundled.path) else { return }
+        if let installed = readVersion(Paths.core.path), atLeast(installed, numbers(bundledVersion)) { return }
+        // 失败时保持现状, 用户仍可在设置中下载或导入
+        try? placeBinary(bundled)
+    }
+
+    nonisolated static func numbers(_ version: String) -> [Int] {
+        version.split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }
+    }
+
     nonisolated static func atLeast(_ version: String, _ minimum: [Int]) -> Bool {
-        let parts = version.split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }
-        for (a, b) in zip(parts + [0, 0, 0], minimum) where a != b {
+        let parts = numbers(version)
+        // 1.12.0-beta.1 之类的预发布后缀会拆出多余数字, 只比较前三段
+        for (a, b) in zip(parts.prefix(3) + [0, 0, 0], minimum.prefix(3)) where a != b {
             return a > b
         }
         return true

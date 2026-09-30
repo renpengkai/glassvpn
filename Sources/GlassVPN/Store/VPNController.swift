@@ -228,7 +228,9 @@ final class VPNController: ObservableObject {
             secret: UUID().uuidString,
             allowLAN: d.bool(forKey: Settings.allowLAN),
             logLevel: d.string(forKey: Settings.logLevel) ?? "info",
-            testURL: d.string(forKey: Settings.testURL) ?? ConfigBuilder.defaultTestURL)
+            testURL: d.string(forKey: Settings.testURL) ?? ConfigBuilder.defaultTestURL,
+            // TUN 模式实际运行的是特权组件里那份 root 内核, 版本可能与用户态内核不同
+            coreVersion: tun ? (core.rootVersion ?? core.version) : core.version)
         let data = try ConfigBuilder.build(nodes: profile.nodes, selected: store.selectedTag, options: options)
         try data.write(to: Paths.config, options: .atomic)
         try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: Paths.config.path)

@@ -102,7 +102,8 @@ struct SettingsView: View {
             if let message = core.message {
                 Text(message).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
             }
-            Text("内核不随应用打包以保持安装包小巧，从 SagerNet/sing-box 官方 GitHub Releases 下载。")
+            Text(CoreManager.bundledVersion.map { "应用内置 sing-box \($0)；「更新到最新版」从 SagerNet/sing-box 官方 GitHub Releases 下载。" }
+                 ?? "从 SagerNet/sing-box 官方 GitHub Releases 下载。")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }

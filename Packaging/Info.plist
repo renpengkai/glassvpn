@@ -29,6 +29,8 @@
     <key>NSAppleEventsUsageDescription</key>
     <string>安装 TUN / 系统代理特权组件时需要请求管理员授权。</string>
     <key>NSHumanReadableCopyright</key>
-    <string>Proxy core: SagerNet/sing-box (GPLv3), downloaded at runtime. UI inspired by KaringX/karing.</string>
+    <string>Proxy core: SagerNet/sing-box (GPLv3). UI inspired by KaringX/karing.</string>
+    <key>GVPNCoreVersion</key>
+    <string>__CORE_VERSION__</string>
 </dict>
 </plist>

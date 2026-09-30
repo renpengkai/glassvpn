@@ -14,7 +14,7 @@ enum Paths {
         return url
     }()
 
-    /// 用户态内核 (首次启动下载)
+    /// 用户态内核 (启动时从应用包内复制, 或在设置中下载)
     static var core: URL { support.appendingPathComponent("core/sing-box") }
     static var config: URL { support.appendingPathComponent("config.json") }
     static var state: URL { support.appendingPathComponent("profiles.json") }

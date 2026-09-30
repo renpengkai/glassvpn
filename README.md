@@ -2,7 +2,7 @@
 
 轻量的 macOS 代理客户端。原生 SwiftUI 编写，适配 macOS 26/27 液态玻璃；功能参考 [KaringX/karing](https://github.com/KaringX/karing)，内核使用 [sing-box](https://github.com/SagerNet/sing-box)。
 
-- **体积小**：应用本身约 2～3 MB，只包含界面和一个特权小工具；sing-box 内核（约 15 MB）首次使用时从官方 GitHub Releases 下载，也可以导入本地文件。
+- **开箱即用**：界面和特权小工具不到 1 MB，安装包内置 sing-box 官方最新正式版内核，首次启动自动安装；之后可在设置中一键更新到最新版，或导入本地文件。
 - **订阅兼容**：Clash / Clash.Meta(mihomo) YAML、V2ray / V2fly / Xray JSON、sing-box JSON、Shadowsocks SIP008、Base64 订阅、分享链接列表，以及 GitHub 上的配置文件（文件页、raw、Gist、私有仓库令牌、加速镜像）。
 - **协议**：Shadowsocks（含 obfs / v2ray-plugin）、VMess、VLESS（含 Reality / Vision）、Trojan、Hysteria、Hysteria2（含端口跳跃）、TUIC、SOCKS5、HTTP、AnyTLS；传输层支持 WebSocket、gRPC、HTTP/2、HTTPUpgrade、QUIC。
 - **接管方式**：系统代理（HTTP/HTTPS/SOCKS5 混合端口），或 TUN 模式接管所有应用流量。
@@ -13,15 +13,17 @@
 需要 Xcode 26 及以上（液态玻璃 API 来自 macOS 26 SDK；用旧版 Xcode 也能编译，只是没有玻璃效果）。
 
 ```bash
-./scripts/package-app.sh          # 生成 dist/GlassVPN.app 与 zip
+./scripts/package-app.sh                        # 生成 dist/GlassVPN.app 与 zip，内置最新 sing-box
 ARCH=x86_64 ./scripts/package-app.sh
+SING_BOX_VERSION=1.12.8 ./scripts/package-app.sh  # 指定内置内核版本
+BUNDLE_CORE=0 ./scripts/package-app.sh          # 不内置内核（约 400 KB 的精简包）
 ```
 
 推送到 GitHub 后，`.github/workflows/build-macos.yml` 会自动构建；推送 `v*` 标签会发布 Release。
 
 ## 使用
 
-1. 首次打开会显示主窗口，在「设置 → sing-box 内核」点击下载（访问 GitHub 慢时可先填写 GitHub 加速镜像）。
+1. 首次打开会显示主窗口，内置内核已自动安装（精简包需在「设置 → sing-box 内核」点击下载）。
 2. 在「订阅」中添加订阅链接、GitHub 文件地址，或粘贴分享链接 / 配置内容。
 3. 点击连接按钮。默认是规则模式：国内域名与 IP 直连，其余走代理。
 4. 需要 TUN 模式时，在「设置 → 特权组件」安装一次（会请求管理员密码），然后打开 TUN 开关。

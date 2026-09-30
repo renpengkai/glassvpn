@@ -25,6 +25,8 @@ enum ConfigBuilder {
         var allowLAN: Bool
         var logLevel: String
         var testURL: String
+        /// 将要运行的内核版本, 用于选择各版本才支持的字段; 未知时按旧版本生成
+        var coreVersion: String?
     }
 
     static func build(nodes: [ProxyNode], selected: String?, options o: Options) throws -> Data {
@@ -85,8 +87,18 @@ enum ConfigBuilder {
             ["ip_is_private": true, "outbound": "direct"],
             ["rule_set": ["geosite-cn", "geoip-cn"], "outbound": "direct"],
         ]
+        // 1.14 起 download_detour 弃用 (1.16 删除), 改用 http_client; 旧版本不认识 http_client。
+        // http_client 为空对象会回落到默认出站 (即代理), 不写 detour 才是直连,
+        // 而显式 detour 到 direct 会被内核拒绝, 所以用一个非空的默认字段占位。
+        let modernHTTPClient = o.coreVersion.map { CoreManager.atLeast($0, [1, 14, 0]) } ?? false
         let ruleSetList: [JSON] = ruleSets.map { rs -> JSON in
-            ["type": "remote", "tag": .string(rs.tag), "format": "binary", "url": .string(rs.url), "download_detour": "direct"]
+            var item: JSON = ["type": "remote", "tag": .string(rs.tag), "format": "binary", "url": .string(rs.url)]
+            if modernHTTPClient {
+                item["http_client"] = ["engine": "go"]
+            } else {
+                item["download_detour"] = "direct"
+            }
+            return item
         }
         let route: JSON = [
             "rules": routeRules,

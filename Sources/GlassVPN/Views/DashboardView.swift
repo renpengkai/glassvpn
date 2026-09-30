@@ -22,7 +22,7 @@ struct DashboardView: View {
                     .padding(.horizontal, -24)
 
                 if !core.isInstalled {
-                    Banner(text: "尚未安装 sing-box 内核。内核不随应用打包，首次使用需下载（约 15 MB）。",
+                    Banner(text: "尚未安装 sing-box 内核，请在设置中下载或导入。",
                            action: ("前往设置", { goTo(.settings) }))
                 } else if store.profiles.isEmpty {
                     Banner(text: "还没有订阅，添加 Clash / V2ray / Sing-box / Shadowsocks / GitHub 订阅后即可连接。",
