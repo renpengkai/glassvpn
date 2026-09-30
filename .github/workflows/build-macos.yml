@@ -1,0 +1,54 @@
+name: build-macos
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    # 液态玻璃只对链接 macOS 26+ SDK 的应用生效; 部署目标仍是 macOS 13, 旧系统保持原外观
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          xcrun --sdk macosx --show-sdk-version
+
+      - name: Build and package
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            export VERSION="${GITHUB_REF_NAME#v}"
+          else
+            export VERSION="0.1.0"
+          fi
+          export BUILD="$GITHUB_RUN_NUMBER"
+          ./scripts/package-app.sh
+          {
+            echo "### GlassVPN $VERSION ($BUILD)"
+            echo '```'
+            du -sh dist/GlassVPN.app
+            ls -l dist/GlassVPN.app/Contents/MacOS/ dist/*.zip
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GlassVPN
+          path: dist/*.zip
+          if-no-files-found: error
+
+      - name: Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          generate_release_notes: true
