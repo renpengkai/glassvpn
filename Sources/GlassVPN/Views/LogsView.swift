@@ -4,8 +4,9 @@
 // 日志页: 每秒读取内核日志末尾并自动滚动到底部。
 //
 
-import SwiftUI
 import AppKit
+import Combine
+import SwiftUI
 
 struct LogsView: View {
     @EnvironmentObject private var vpn: VPNController
