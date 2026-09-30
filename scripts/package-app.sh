@@ -25,7 +25,29 @@ BIN_DIR="$(swift build -c release --arch "$ARCH" --show-bin-path)"
 DIST="$ROOT/dist"
 APP="$DIST/$NAME.app"
 rm -rf "$DIST"
-mkdir -p "$APP/Contents/MacOS"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+
+if [[ -f "$ROOT/Packaging/AppIcon.icns" ]]; then
+    cp "$ROOT/Packaging/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
+elif [[ -f "$ROOT/Packaging/AppIcon.png" ]]; then
+    # CI / 本机可用时从 PNG 现场生成; 仓库一般直接提交 .icns
+    ICONSET="$(mktemp -d)/AppIcon.iconset"
+    mkdir -p "$ICONSET"
+    AT='@'
+    for SPEC in \
+        "16:icon_16x16.png" "32:icon_16x16${AT}2x.png" \
+        "32:icon_32x32.png" "64:icon_32x32${AT}2x.png" \
+        "128:icon_128x128.png" "256:icon_128x128${AT}2x.png" \
+        "256:icon_256x256.png" "512:icon_256x256${AT}2x.png" \
+        "512:icon_512x512.png" "1024:icon_512x512${AT}2x.png"
+    do
+        SIZE="${SPEC%%:*}"
+        NAME_PNG="${SPEC#*:}"
+        sips -z "$SIZE" "$SIZE" "$ROOT/Packaging/AppIcon.png" --out "$ICONSET/$NAME_PNG" >/dev/null
+    done
+    iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
+    rm -rf "$(dirname "$ICONSET")"
+fi
 
 SDK_VERSION="$(xcrun --sdk macosx --show-sdk-version)"
 for BIN in "$NAME" "$HELPER"; do
